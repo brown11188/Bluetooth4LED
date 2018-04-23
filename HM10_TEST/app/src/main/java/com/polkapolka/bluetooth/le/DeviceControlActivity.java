@@ -34,6 +34,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -55,7 +56,7 @@ import android.widget.Toast;
  * communicates with {@code BluetoothLeService}, which in turn interacts with the
  * Bluetooth LE API.
  */
-public class DeviceControlActivity extends Activity implements View.OnClickListener {
+public class DeviceControlActivity extends Activity implements View.OnClickListener, View.OnLongClickListener, View.OnTouchListener {
     private final static String TAG = DeviceControlActivity.class.getSimpleName();
     public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
     public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
@@ -69,6 +70,8 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
     private final String LIST_NAME = "NAME";
     private final String LIST_UUID = "UUID";
     private Context context=this;
+    private boolean isCommandButtonLongPressed = false;
+
     //Element
         //BlueTooth
     private BluetoothLeService mBluetoothLeService;
@@ -107,35 +110,21 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
             }
 
         });
-        btn_up.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                write_hm10_chara("u");
-                Toast.makeText(getApplicationContext(), "Sent: u", Toast.LENGTH_LONG);
-            }
-        });
-        btn_left.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                write_hm10_chara("l");
-                Toast.makeText(getApplicationContext(), "Sent: l", Toast.LENGTH_LONG);
-            }
-        });
-        btn_right.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                write_hm10_chara("r");
-                Toast.makeText(getApplicationContext(), "Sent: r", Toast.LENGTH_LONG);
-            }
-        });
-        btn_down.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                write_hm10_chara("d");
-                Toast.makeText(getApplicationContext(), "Sent: d", Toast.LENGTH_LONG);
-            }
-        });
-
+        //On click
+        btn_up.setOnClickListener(this);
+        btn_left.setOnClickListener(this);
+        btn_right.setOnClickListener(this);
+        btn_down.setOnClickListener(this);
+        //long click
+        btn_up.setOnLongClickListener(this);
+        btn_left.setOnLongClickListener(this);
+        btn_right.setOnLongClickListener(this);
+        btn_down.setOnLongClickListener(this);
+        //hold
+        btn_up.setOnTouchListener(this);
+        btn_left.setOnTouchListener(this);
+        btn_right.setOnTouchListener(this);
+        btn_down.setOnTouchListener(this);
     }
     // Code to manage Service lifecycle.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -391,7 +380,8 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.imgbtn_up:
-
+                write_hm10_chara("u");
+                Toast.makeText(this, "Sent: l", Toast.LENGTH_LONG);
                 break;
             case R.id.imgbtn_left:
                 write_hm10_chara("l");
@@ -405,6 +395,110 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
                 write_hm10_chara("d");
                 Toast.makeText(this, "Sent: d", Toast.LENGTH_LONG);
                 break;
+        }
+    }
+
+    @Override
+    public boolean onLongClick(View v) {
+        switch (v.getId()) {
+            case R.id.imgbtn_up:
+                isCommandButtonLongPressed = true;
+                while (isCommandButtonLongPressed){
+                    try {
+                        write_hm10_chara("u");
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                return true;
+            case R.id.imgbtn_left:
+                isCommandButtonLongPressed = true;
+                while (isCommandButtonLongPressed){
+                    try {
+                        write_hm10_chara("l");
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                return true;
+            case R.id.imgbtn_right:
+                isCommandButtonLongPressed = true;
+                while (isCommandButtonLongPressed){
+                    try {
+                        write_hm10_chara("r");
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                return true;
+            case R.id.imgbtn_down:
+                isCommandButtonLongPressed = true;
+                while (isCommandButtonLongPressed){
+                    try {
+                        write_hm10_chara("d");
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                return true;
+            default:
+                return true;
+        }
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        switch (v.getId()) {
+            case R.id.imgbtn_up:
+                v.onTouchEvent(event);
+                // We're only interested in when the button is released.
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    // We're only interested in anything if our speak button is currently pressed.
+                    if (isCommandButtonLongPressed) {
+                        // Do something when the button is released.
+                        isCommandButtonLongPressed = false;
+                    }
+                }
+                return false;
+            case R.id.imgbtn_left:
+                v.onTouchEvent(event);
+                // We're only interested in when the button is released.
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    // We're only interested in anything if our speak button is currently pressed.
+                    if (isCommandButtonLongPressed) {
+                        // Do something when the button is released.
+                        isCommandButtonLongPressed = false;
+                    }
+                }
+                return false;
+            case R.id.imgbtn_right:
+                v.onTouchEvent(event);
+                // We're only interested in when the button is released.
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    // We're only interested in anything if our speak button is currently pressed.
+                    if (isCommandButtonLongPressed) {
+                        // Do something when the button is released.
+                        isCommandButtonLongPressed = false;
+                    }
+                }
+                return false;
+            case R.id.imgbtn_down:
+                v.onTouchEvent(event);
+                // We're only interested in when the button is released.
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    // We're only interested in anything if our speak button is currently pressed.
+                    if (isCommandButtonLongPressed) {
+                        // Do something when the button is released.
+                        isCommandButtonLongPressed = false;
+                    }
+                }
+                return false;
+            default:
+                return false;
         }
     }
 }
