@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+
 import android.widget.Toast;
 
 /**
@@ -64,16 +65,16 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
     private TextView isSerial;
     private TextView mConnectionState;
     private TextView mDataField;
-    private TextView f_dist_txt,c_rssi_txt;
+    private TextView f_dist_txt, c_rssi_txt;
     private Button get_rssi_btn;
-    private  ImageButton btn_up, btn_left, btn_right, btn_down;
+    private ImageButton btn_up, btn_left, btn_right, btn_down;
     private final String LIST_NAME = "NAME";
     private final String LIST_UUID = "UUID";
-    private Context context=this;
+    private Context context = this;
     private boolean isCommandButtonLongPressed = false;
 
     //Element
-        //BlueTooth
+    //BlueTooth
     private BluetoothLeService mBluetoothLeService;
     private BluetoothGattCharacteristic characteristicTX;
     private BluetoothGattCharacteristic characteristicRX;
@@ -81,8 +82,9 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
     private String mDeviceName;
     private String mDeviceAddress;
     private String ReceiveData;
-    private  String Data_Array[];
+    private String Data_Array[];
     private boolean mConnected = false;
+    private Timer timer = new Timer();
 
     //Bluetooth Variable
     int rssi;
@@ -93,7 +95,7 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
     private double f_dist;
 
     //Global Function
-    public static int counter=0;
+    public static int counter = 0;
     public static int[] rssiArray = new int[11];
     public final static UUID HM_RX_TX = UUID.fromString(SampleGattAttributes.HM_RX_TX);
 
@@ -102,7 +104,7 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.gatt_services_characteristics);
         layout_init();
-        get_rssi_btn.setOnClickListener(new Button.OnClickListener(){
+        get_rssi_btn.setOnClickListener(new Button.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // TODO Auto-generated method stub
@@ -111,10 +113,10 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
 
         });
         //On click
-        btn_up.setOnClickListener(this);
-        btn_left.setOnClickListener(this);
-        btn_right.setOnClickListener(this);
-        btn_down.setOnClickListener(this);
+//        btn_up.setOnClickListener(this);
+//        btn_left.setOnClickListener(this);
+//        btn_right.setOnClickListener(this);
+//        btn_down.setOnClickListener(this);
         //long click
         btn_up.setOnLongClickListener(this);
         btn_left.setOnLongClickListener(this);
@@ -126,6 +128,7 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
         btn_right.setOnTouchListener(this);
         btn_down.setOnTouchListener(this);
     }
+
     // Code to manage Service lifecycle.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
@@ -166,27 +169,26 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
                 displayGattServices(mBluetoothLeService.getSupportedGattServices());
-            }
-            else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                    //Get Data Response
-                    ReceiveData=intent.getStringExtra(mBluetoothLeService.EXTRA_DATA);
+            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
+                //Get Data Response
+                ReceiveData = intent.getStringExtra(mBluetoothLeService.EXTRA_DATA);
                     /*
                                             HM10 Transfer
                                             GET:Read RSSI and Calculate the distance and send to the HM10
                                         */
-                    if(ReceiveData.equals("GET")){
+                if (ReceiveData.equals("GET")) {
                         /*HM10 Data process (Process Char)
                                                     String[] tokens = ReceiveData.split(":");
                                                     ReceiveData = tokens[1];
                                                     mDataField.setText(tokens[1]);
                                                */
-                        //RSSI->Distance
-                        rssi=mBluetoothLeService.getbluetoothrssi();
-                        c_rssi_txt.setText(Integer.toString(rssi));
-                        f_dist = getDist(69, rssi)*100;
-                        f_dist_txt.setText(Double.toString(f_dist));
-                        write_hm10_chara("RSSI="+Integer.toString(rssi)+"\n"+"DIST="+Double.toString(f_dist)+"\n");
-                    }
+                    //RSSI->Distance
+                    rssi = mBluetoothLeService.getbluetoothrssi();
+                    c_rssi_txt.setText(Integer.toString(rssi));
+                    f_dist = getDist(69, rssi) * 100;
+                    f_dist_txt.setText(Double.toString(f_dist));
+                    write_hm10_chara("RSSI=" + Integer.toString(rssi) + "\n" + "DIST=" + Double.toString(f_dist) + "\n");
+                }
             }
         }
     };
@@ -203,8 +205,9 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
         }
         return super.onKeyDown(keyCode, event);
     }
-    private void layout_init(){
-        get_rssi_btn=(Button)findViewById(R.id.button);
+
+    private void layout_init() {
+        get_rssi_btn = (Button) findViewById(R.id.button);
         btn_up = (ImageButton) findViewById(R.id.imgbtn_up);
         btn_left = (ImageButton) findViewById(R.id.imgbtn_left);
         btn_right = (ImageButton) findViewById(R.id.imgbtn_right);
@@ -218,44 +221,42 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
         mConnectionState = (TextView) findViewById(R.id.connection_state);
         // is serial present?
         isSerial = (TextView) findViewById(R.id.isSerial);
-        f_dist_txt=(TextView)findViewById(R.id.f1_dist_txt);
-        c_rssi_txt=(TextView)findViewById(R.id.c_rssi_txt);
+        f_dist_txt = (TextView) findViewById(R.id.f1_dist_txt);
+        c_rssi_txt = (TextView) findViewById(R.id.c_rssi_txt);
 
 
-        Data_Array=new String[50];
+        Data_Array = new String[50];
         getActionBar().setTitle(mDeviceName);
         getActionBar().setDisplayHomeAsUpEnabled(true);
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
 
     }
+
     //DIST Formula2
     public double calculateAccuracy(int txPower, double rssi) {
-        if (rssi == 0)
-        {
+        if (rssi == 0) {
             return -1.0;
         }
         double ratio = rssi * 1.0 / txPower;
 
-        if (ratio < 1.0)
-        {
+        if (ratio < 1.0) {
             return Math.pow(ratio, 10);
-        }
-        else
-        {
+        } else {
             double accuracy = (0.89976) * Math.pow(ratio, 7.7095) + 0.111;
             return accuracy;
         }
     }
+
     //DIST Formula1
-    public  float getDist(int txpower,int rssi){
+    public float getDist(int txpower, int rssi) {
         int iRssi = Math.abs(rssi);
-        float power = (float) ((iRssi-txpower)/(10*2.0));
+        float power = (float) ((iRssi - txpower) / (10 * 2.0));
         return (float) Math.pow(10, power);
     }
 
     private void write_hm10_chara(String str) {
-        if (characteristicTX !=null) {
+        if (characteristicTX != null) {
             characteristicTX.setValue(str);
         } else {
             Log.d(TAG, "mBLEGattChara == null");
@@ -268,6 +269,7 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
             return;
         }
     }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -277,7 +279,6 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
             Log.d(TAG, "Connect request result=" + result);
         }
     }
-
 
 
     @Override
@@ -309,7 +310,7 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
+        switch (item.getItemId()) {
             case R.id.menu_connect:
                 mBluetoothLeService.connect(mDeviceAddress);
                 return true;
@@ -347,23 +348,22 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
             uuid = gattService.getUuid().toString();
             currentServiceData.put(
                     LIST_NAME, SampleGattAttributes.lookup(uuid, unknownServiceString));
-            
+
             // Check service exists for HM 10 Serial
-            if(SampleGattAttributes.lookup(uuid, unknownServiceString) == "HM 10 Serial") {
+            if (SampleGattAttributes.lookup(uuid, unknownServiceString) == "HM 10 Serial") {
                 isSerial.setText("Yes, serial");
-            }
-            else{
+            } else {
                 isSerial.setText("No, serial");
             }
             currentServiceData.put(LIST_UUID, uuid);
             gattServiceData.add(currentServiceData);
 
-     		// get characteristic when UUID matches RX/TX UUID
-    		 characteristicTX = gattService.getCharacteristic(BluetoothLeService.UUID_HM_RX_TX);
-    		 characteristicRX = gattService.getCharacteristic(BluetoothLeService.UUID_HM_RX_TX);
+            // get characteristic when UUID matches RX/TX UUID
+            characteristicTX = gattService.getCharacteristic(BluetoothLeService.UUID_HM_RX_TX);
+            characteristicRX = gattService.getCharacteristic(BluetoothLeService.UUID_HM_RX_TX);
         }
         //Open RX
-        mBluetoothLeService.setCharacteristicNotification(characteristicRX,true);
+        mBluetoothLeService.setCharacteristicNotification(characteristicRX, true);
     }
 
     private static IntentFilter makeGattUpdateIntentFilter() {
@@ -378,7 +378,7 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
     @SuppressLint("ShowToast")
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.imgbtn_up:
                 write_hm10_chara("u");
                 Toast.makeText(this, "Sent: l", Toast.LENGTH_LONG);
@@ -403,53 +403,47 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
         switch (v.getId()) {
             case R.id.imgbtn_up:
                 isCommandButtonLongPressed = true;
-                while (isCommandButtonLongPressed){
-                    try {
+                TimerTask timerTaskObjUp = new TimerTask() {
+                    public void run() {
                         write_hm10_chara("u");
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
                     }
-                }
+                };
+                timer.schedule(timerTaskObjUp, 0, 100);
                 return true;
             case R.id.imgbtn_left:
                 isCommandButtonLongPressed = true;
-                while (isCommandButtonLongPressed){
-                    try {
+                TimerTask timerTaskObjLeft = new TimerTask() {
+                    public void run() {
                         write_hm10_chara("l");
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
                     }
-                }
+                };
+                timer.schedule(timerTaskObjLeft, 0, 100);
                 return true;
             case R.id.imgbtn_right:
                 isCommandButtonLongPressed = true;
-                while (isCommandButtonLongPressed){
-                    try {
+                TimerTask timerTaskObjRight = new TimerTask() {
+                    public void run() {
                         write_hm10_chara("r");
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        Log.d("Check: ", "uuuuuuuuuu");
                     }
-                }
+                };
+                timer.schedule(timerTaskObjRight, 0, 100);
                 return true;
             case R.id.imgbtn_down:
                 isCommandButtonLongPressed = true;
-                while (isCommandButtonLongPressed){
-                    try {
+                TimerTask timerTaskObjDown = new TimerTask() {
+                    public void run() {
                         write_hm10_chara("d");
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
                     }
-                }
+                };
+                timer.schedule(timerTaskObjDown, 0, 100);
                 return true;
             default:
                 return true;
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         switch (v.getId()) {
@@ -461,6 +455,7 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
                     if (isCommandButtonLongPressed) {
                         // Do something when the button is released.
                         isCommandButtonLongPressed = false;
+                        timer.cancel();
                     }
                 }
                 return false;
@@ -472,6 +467,7 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
                     if (isCommandButtonLongPressed) {
                         // Do something when the button is released.
                         isCommandButtonLongPressed = false;
+                        timer.cancel();
                     }
                 }
                 return false;
@@ -483,6 +479,7 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
                     if (isCommandButtonLongPressed) {
                         // Do something when the button is released.
                         isCommandButtonLongPressed = false;
+                        timer.cancel();
                     }
                 }
                 return false;
@@ -494,6 +491,7 @@ public class DeviceControlActivity extends Activity implements View.OnClickListe
                     if (isCommandButtonLongPressed) {
                         // Do something when the button is released.
                         isCommandButtonLongPressed = false;
+                        timer.cancel();
                     }
                 }
                 return false;
